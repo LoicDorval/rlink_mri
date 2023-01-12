@@ -1,0 +1,3 @@
+numpy
+git+https://github.com/rlink7/rlink_7limri.git
+hopla
