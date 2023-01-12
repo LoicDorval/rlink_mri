@@ -4,6 +4,11 @@
 ![License](https://img.shields.io/badge/License-CeCILLB-blue.svg)
 ![PoweredBy](https://img.shields.io/badge/Powered%20by-CEA%2FNeuroSpin-blue.svg)
 
+## Development
+
+![Pep8](https://github.com/rlink7/rlink_mri/actions/workflows/pep8.yml/badge.svg)
+
+
 # R-Link MRI processings.
 
 The following processings are available in the derivatives folder.
