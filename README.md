@@ -31,8 +31,8 @@ Deface structural T1w images.
   <summary>Paper description (click me)</summary>
 <p>
     <br>
-    <b>Steps:</b> The UK-Biobank study uses a customized image processing pipeline based on FSL (<b>Alfaro-Almagro et al., 2018</b>) which includes a defacing approach. It was designed for use with T1w images. This defacing approach was later extracted from the larger processing pipeline and released as part of the main FSL package as <i>fsl\_deface</i>. Like other tools, such as <i>mri\_deface</i> and <i>pydeface</i>, this method uses linear registration to locate its own pre-defined mask of face voxels on the target image, then sets voxels in the mask to zero. Unlike <i>mri\_deface</i> and pydeface, this method also removes the ears. We used <i>fsl\_deface</i> as included in FSL (<b>Jenkinson and Smith (2001)</b>) with default settings.<br>
-    <b>Quality control:</b> coming soon.
+    <b>Steps:</b> The UK-Biobank study uses a customized image processing pipeline based on FSL (<b>Alfaro-Almagro et al., 2018</b>) which includes a defacing approach. It was designed for use with T1w images. This defacing approach was later extracted from the larger processing pipeline and released as part of the main FSL package as <i>fsl_deface</i>. Like other tools, such as <i>mri_deface</i> and <i>pydeface</i>, this method uses linear registration to locate its own pre-defined mask of face voxels on the target image, then sets voxels in the mask to zero. Unlike <i>mri_deface</i> and pydeface, this method also removes the ears. We used <i>fsl_deface</i> as included in FSL (<b>Jenkinson and Smith (2001)</b>) with default settings.<br>
+    <b>Quality control:</b> A manual quality control was performed.
 </p>
 <p align='right'>
     <b>- NeuroSpin support team</b> <i>(Ways to Simplify Your Writing)</i>
