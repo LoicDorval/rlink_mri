@@ -75,11 +75,11 @@ def run(datadir, outdir, simg_file, name="dmriprep",
     for sub_ses in list_sub_ses:
         print()
         print(sub_ses) # to delete
-        print(sub_ses) # to delete
         # Verify all the mandatory file for prequal launch
         # dwi
         _dwi = glob.glob(os.path.join(sub_ses, "dwi",
                                       "*_acq-DWI*_run-*_dwi.nii.gz"))
+        _dwi.sort()
         if len(_dwi) != 2:
             print(f"this sub and session don't have 2 dwi.nii.gz : "
                   f"'{sub_ses}'")
@@ -89,6 +89,7 @@ def run(datadir, outdir, simg_file, name="dmriprep",
         # bvec
         _bvec = glob.glob(os.path.join(sub_ses, "dwi",
                                        "*_acq-DWI*_run-*_dwi.bvec"))
+        _bvec.sort()
         if len(_bvec) != 2:
             print(f"this sub and session don't have 2 .bvec : "
                   f"'{sub_ses}'")
@@ -98,6 +99,7 @@ def run(datadir, outdir, simg_file, name="dmriprep",
         # bval
         _bval = glob.glob(os.path.join(sub_ses, "dwi",
                                        "*_acq-DWI*_run-*_dwi.bval"))
+        _bval.sort()
         if len(_bval) != 2:
             print(f"this sub and session don't have 2 .bval : "
                   f"'{sub_ses}'")
@@ -106,6 +108,8 @@ def run(datadir, outdir, simg_file, name="dmriprep",
         # json
         _json = glob.glob(os.path.join(sub_ses, "dwi",
                                        "*_acq-DWI*_run-*_dwi.json"))
+        _json.sort()
+
         if len(_json) != 2:
             print(f"this sub and session don't have 2 .json : "
                   f"'{sub_ses}'")
@@ -171,7 +175,7 @@ def run(datadir, outdir, simg_file, name="dmriprep",
         list_pe = list_pe[:1]
         list_readout = list_readout[:1]
         list_outdir = list_outdir[:1]
-    
+
     print(f"number of runs: {len(list_dwi)}")
     header = ["dwi", "bvec", "bval", "pe", "readout_time", "ouput_dir"]
     print("{:>8} {:>8} {:>8} {:>8}".format(*header))
@@ -224,7 +228,7 @@ def run(datadir, outdir, simg_file, name="dmriprep",
             pe=list_pe,
             readout_time=list_readout,
             output_dir=list_outdir,
-            #hopla_name_replace=True,
+            # hopla_name_replace=True,
             hopla_iterative_kwargs=["dwi", "bvec", "bval",
                                     "pe", "readout_time", "output_dir"],
             hopla_optional=["dwi", "bvec", "bval",
