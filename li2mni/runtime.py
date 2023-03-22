@@ -70,7 +70,7 @@ def run(datadir, outdir, name="li2mni", process=False, njobs=10,
         _outdir = os.path.join(outdir, name, subject, "ses-M03Li")
         if not os.path.isdir(_outdir):
             os.makedirs(_outdir)
-        _status_file = os.path.join(_outdir, "shiftedli2mni.nii.gz")
+        _status_file = os.path.join(_outdir, "li2mni.nii.gz")
         if os.path.isfile(_status_file):
             continue
         _lianat_files = glob.glob(os.path.join(
@@ -120,7 +120,7 @@ def run(datadir, outdir, name="li2mni", process=False, njobs=10,
             os.makedirs(logdir)
         logfile = os.path.join(logdir, f"{name}_{date}.log")
         status, exitcodes = hopla(
-            "li2mni-all",
+            "li2mni",
             li_file=li_files,
             lianat_file=lianat_files,
             hanat_file=hanat_files,
