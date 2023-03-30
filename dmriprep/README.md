@@ -38,3 +38,11 @@ References:
 [18] Hua, K. et al. (2008). Tract probability maps in stereotaxic spaces: analyses of white matter anatomy and tract-specific quantification. Neuroimage, 39(1), 336-347.
 [19] Avants, B. B. et al. (2008). Symmetric diffeomorphic image registration with cross-correlation: evaluating automated labeling of elderly and neurodegenerative brain. Medical image analysis, 12(1), 26-41.
 [20] Jeurissen, B. et al. (2014). Automated correction of improperly rotated diffusion gradient orientations in diffusion weighted MRI. Medical image analysis, 18(7), 953-962.
+
+# dmriprep qc
+automatic qc with fa value of 5 bundle ["Genu_of_corpus_callosum_med_fa", 
+                                        "Body_of_corpus_callosum_med_fa",
+                                        "Splenium_of_corpus_callosum_med_fa",
+                                        "Corticospinal_tract_L_med_fa",
+                                        "Corticospinal_tract_R_med_fa"]
+Must be between 0.3 and 0.75.
