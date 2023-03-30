@@ -73,8 +73,6 @@ def run(datadir, outdir, simg_file, name="dmriprep",
     list_dwi, list_bvec, list_bval, list_pe, list_readout, list_outdir = \
         [], [], [], [], [], []
     for sub_ses in list_sub_ses:
-        print()
-        print(sub_ses) # to delete
         # Verify all the mandatory file for prequal launch
         # dwi
         _dwi = glob.glob(os.path.join(sub_ses, "dwi",
@@ -134,8 +132,6 @@ def run(datadir, outdir, simg_file, name="dmriprep",
                           f"message: {e}")
             if "PhaseEncodingDirection" in data.keys():
                 _pe.append(str(data["PhaseEncodingDirection"]))
-            if "PhaseEncodingAxis" in data.keys():
-                _pe.append(str(data["PhaseEncodingAxis"]))
             if "TotalReadoutTime" in data.keys():
                 _readout.append(str(data["TotalReadoutTime"]))
             if "EstimatedTotalReadoutTime" in data.keys():
@@ -219,7 +215,6 @@ def run(datadir, outdir, simg_file, name="dmriprep",
         logfile = os.path.join(logdir, f"{name}_{date}.log")
         cmd = (f"singularity run --bind {os.path.dirname(datadir)} "
                f"{simg_file} brainprep dmriprep")
-        print(f"{cmd}") # to delete
         status, exitcodes = hopla(
             cmd,
             dwi=list_dwi,
@@ -228,7 +223,6 @@ def run(datadir, outdir, simg_file, name="dmriprep",
             pe=list_pe,
             readout_time=list_readout,
             output_dir=list_outdir,
-            # hopla_name_replace=True,
             hopla_iterative_kwargs=["dwi", "bvec", "bval",
                                     "pe", "readout_time", "output_dir"],
             hopla_optional=["dwi", "bvec", "bval",
