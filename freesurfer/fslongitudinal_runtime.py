@@ -11,9 +11,7 @@
 # Imports
 import os
 import fire
-import glob
 import datetime
-import collections
 from hopla.converter import hopla
 
 
@@ -30,29 +28,25 @@ def get_best_anat(files):
         raise ValueError("No anatomical file provided!")
 
 
-def iter_replace(item, replace, by):
-    """ Iteratively replace by.
-    """
-    if not isinstance(item, list):
-        return item
-    return [sub_item.replace(replace, by) if isinstance(sub_item, str)
-            else sub_item for sub_item in item]
-
-
-def run(datadir, outdir, simg_file, name="cat12vbm", process=False, njobs=10,
-        use_pbs=False, test=False):
+def run(datadir, outdir, template_dir, fs_license_file, simg_file,
+        name="freesurfer_long", process=False, njobs=10, use_pbs=False,
+        test=False):
     """ Parse data and execute the processing with hopla.
 
     Parameters
     ----------
     datadir: str
-        path to the BIDS rawdata directory.
+        path to the BIDS derivatives directory of the freesurfer process.
     outdir: str
         path to the BIDS derivatives directory.
+    template_dir: str
+        path to the fsaverage_sym template.
+    fs_license_file: str
+        path to the FreeSurfer license file.
     simg_file: str
         path to the brainprep singularity image.
-    name: str, default 'cat12vbm'
-        the name of the cirrent analysis.
+    name: str, default 'freesurfer_long'
+        the name of the current analysis.
     process: bool, default False
         optionnaly launch the process.
     njobs: int, default 10
@@ -62,48 +56,33 @@ def run(datadir, outdir, simg_file, name="cat12vbm", process=False, njobs=10,
     test: bool, default False
         optionnaly, select only one subject.
     """
-    anat_files, sessions, sub_outdirs, is_longs = [], [], [], []
+    subjects, sub_outdirs = [], []
+    timepoints = ["ses-M00", "ses-M03"]
+    fsdirs = [os.path.join(outdir, "freesurfer", tp) for tp in timepoints]
     for subject in os.listdir(datadir):
-        _long_anat_files = []
-        _long_sessions = []
-        for session in ("ses-M00", "ses-M03"):
-            sesdir = os.path.join(datadir, subject, session)
-            if not os.path.isdir(sesdir):
-                print(f"no '{sesdir}' session available!")
-                continue
-            _anat_files = glob.glob(os.path.join(
-                sesdir, "anat", f"sub-*_{session}_*T1w.nii.gz"))
-            _long_anat_files.append(get_best_anat(_anat_files))
-            _long_sessions.append(session)
-        if len(_long_anat_files) == 0:
+        session = 'ses-M03'
+        sesdir = os.path.join(datadir, subject, session)
+        if not os.path.isdir(sesdir):
+            print(f"no '{sesdir}' session available!")
             continue
         _outdir = os.path.join(outdir, name, subject)
         if not os.path.isdir(_outdir):
             os.makedirs(_outdir)
-        if len(_long_anat_files) > 1:
-            is_longs.append(True)
-        else:
-            is_longs.append(False)
-        anat_files.append(",".join(_long_anat_files))
-        sessions.append(",".join(_long_sessions))
+        subjects.append(subject)
         sub_outdirs.append(_outdir)
-    if len(anat_files) == 0:
-        raise RuntimeError("No data to process!")
     if test:
-        anat_files = anat_files[:1]
-        sessions = sessions[:1]
-        is_longs = is_longs[:1]
+        subjects = subjects[:1]
         sub_outdirs = sub_outdirs[:1]
-    print(f"number of runs: {len(anat_files)}")
-    header = ["anat", "session", "longitudinal", "outdir"]
-    print("{:>8} {:>8} {:>8} {:>8}".format(*header))
-    first = [iter_replace(iter_replace(item[0], datadir, ""), outdir, "")
-             for item in (anat_files, sessions, is_longs, sub_outdirs)]
-    print("{} {} {} {}".format(*first))
+    print(f"number of runs: {len(subjects)}")
+    header = ["subject", "outdir"]
+    print("{:>8} {:>8}".format(*header))
+    first = [item[0].replace(datadir, "").replace(outdir, "")
+             for item in (subjects, sub_outdirs)]
+    print("{:>8} {:>8}".format(*first))
     print("...")
-    last = [iter_replace(iter_replace(item[-1], datadir, ""), outdir, "")
-            for item in (anat_files, sessions, is_longs, sub_outdirs)]
-    print("{} {} {} {}".format(*last))
+    last = [item[-1].replace(datadir, "").replace(outdir, "")
+            for item in (subjects, sub_outdirs)]
+    print("{:>8} {:>8}".format(*last))
 
     if process:
         pbs_kwargs = {}
@@ -120,19 +99,19 @@ def run(datadir, outdir, simg_file, name="cat12vbm", process=False, njobs=10,
         if not os.path.isdir(logdir):
             os.makedirs(logdir)
         logfile = os.path.join(logdir, f"{name}_{date}.log")
-        cmd = (f"singularity run --bind {os.path.dirname(datadir)} --cleanenv "
-               f"{simg_file} brainprep cat12vbm")
+        cmd = (f"singularity run --bind {fs_license_file}:/opt/freesurfer/"
+               f".license --bind {os.path.dirname(datadir)} --cleanenv "
+               f"{simg_file} brainprep fsreconall-longitudinal")
         status, exitcodes = hopla(
             cmd,
-            anatomical=anat_files,
+            sid=subjects,
+            fsdirs=fsdirs,
             outdir=sub_outdirs,
-            session=sessions,
-            longitudinal=is_longs,
-            model_long=1,
+            timepoints=",".join(timepoints),
+            template_dir=template_dir,
             hopla_name_replace=True,
-            hopla_iterative_kwargs=["anatomical", "outdir", "session",
-                                    "longitudinal"],
-            hopla_optional=["anatomical", "outdir", "session", "longitudinal"],
+            hopla_iterative_kwargs=["sid", "outdir"],
+            hopla_optional=["sid", "outdir"],
             hopla_cpus=njobs,
             hopla_logfile=logfile,
             hopla_use_subprocess=True,

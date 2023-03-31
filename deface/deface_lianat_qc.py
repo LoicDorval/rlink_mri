@@ -13,7 +13,6 @@ import os
 import fire
 import glob
 import datetime
-import collections
 from hopla.converter import hopla
 
 
@@ -57,10 +56,13 @@ def run(datadir, outdir, simg_file, cmd=None, name="deface", process=False,
     """
     anat_files, deface_anat_files, deface_roots = [], [], []
     for subject in os.listdir(datadir):
-        for session in ("ses-M00", "ses-M03"):
+        for session in ("ses-M03Li", "ses-M03H"):
             sesdir = os.path.join(datadir, subject, session)
             if not os.path.isdir(sesdir):
                 print(f"no '{sesdir}' session available!")
+                continue
+            if not os.path.isdir(os.path.join(sesdir, "anat")):
+                print("no anat in ses-M03Li")
                 continue
             _outdir = os.path.join(outdir, name, subject, session)
             if not os.path.isdir(_outdir):

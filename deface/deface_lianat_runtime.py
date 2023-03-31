@@ -13,7 +13,6 @@ import os
 import fire
 import glob
 import datetime
-import collections
 from hopla.converter import hopla
 
 
@@ -55,46 +54,38 @@ def run(datadir, outdir, simg_file, cmd=None, name="deface", process=False,
     test: bool, default False
         optionnaly, select only one subject.
     """
-    anat_files, deface_anat_files, deface_roots = [], [], []
+    anat_files, sub_outdirs = [], []
     for subject in os.listdir(datadir):
-        for session in ("ses-M00", "ses-M03"):
+        for session in ("ses-M03Li", "ses-M03H"):
             sesdir = os.path.join(datadir, subject, session)
             if not os.path.isdir(sesdir):
                 print(f"no '{sesdir}' session available!")
                 continue
             _outdir = os.path.join(outdir, name, subject, session)
             if not os.path.isdir(_outdir):
-                print(f"no '{outdir}' folder available!")
+                os.makedirs(_outdir)
+            if not os.path.isdir(os.path.join(sesdir, "anat")):
+                print("no anat in ses-M03Li")
                 continue
             _anat_files = glob.glob(os.path.join(
                 sesdir, "anat", f"sub-*_{session}_*T1w.nii.gz"))
-            best_anat = get_best_anat(_anat_files)
-            basename = os.path.basename(best_anat)
-            deface_anat = os.path.join(_outdir, basename)
-            if not os.path.isfile(deface_anat):
-                print(f"no '{deface_anat}' file!")
-                continue
-            anat_files.append(best_anat)
-            deface_anat_files.append(deface_anat)
-            root = os.path.join(
-                _outdir, basename.replace("_T1w.nii.gz", "_defacemask"))
-            deface_roots.append(root)
+            anat_files.append(get_best_anat(_anat_files))
+            sub_outdirs.append(_outdir)
     if len(anat_files) == 0:
         raise RuntimeError("No data to process!")
     if test:
         anat_files = anat_files[:1]
-        deface_anat_files = deface_anat_files[:1]
-        deface_roots = deface_roots[:1]
+        sub_outdirs = sub_outdirs[:1]
     print(f"number of runs: {len(anat_files)}")
-    header = ["anat", "deface", "root"]
-    print("{:>8} {:>8} {:>8}".format(*header))
+    header = ["anat", "outdir"]
+    print("{:>8} {:>8}".format(*header))
     first = [item[0].replace(datadir, "").replace(outdir, "")
-             for item in (anat_files, deface_anat_files, deface_roots)]
-    print("{:>8} {:>8} {:>8}".format(*first))
+             for item in (anat_files, sub_outdirs)]
+    print("{:>8} {:>8}".format(*first))
     print("...")
     last = [item[-1].replace(datadir, "").replace(outdir, "")
-            for item in (anat_files, deface_anat_files, deface_roots)]
-    print("{:>8} {:>8} {:>8}".format(*last))
+            for item in (anat_files, sub_outdirs)]
+    print("{:>8} {:>8}".format(*last))
 
     if process:
         pbs_kwargs = {}
@@ -110,20 +101,17 @@ def run(datadir, outdir, simg_file, cmd=None, name="deface", process=False,
         logdir = os.path.join(outdir, "logs")
         if not os.path.isdir(logdir):
             os.makedirs(logdir)
-        logfile = os.path.join(logdir, f"{name}-qc_{date}.log")
+        logfile = os.path.join(logdir, f"{name}_{date}.log")
         if cmd is None:
             cmd = (f"singularity run --bind {os.path.dirname(datadir)} "
-                   f"--cleanenv {simg_file} brainprep deface-qc")
+                   f"--cleanenv {simg_file} brainprep deface")
         status, exitcodes = hopla(
             cmd,
             anatomical=anat_files,
-            anatomical_deface=deface_anat_files,
-            deface_root=deface_roots,
-            thr_mask=0.6,
+            outdir=sub_outdirs,
             hopla_name_replace=True,
-            hopla_iterative_kwargs=["anatomical", "anatomical-deface",
-                                    "deface-root"],
-            hopla_optional=["anatomical", "anatomical-deface", "deface-root"],
+            hopla_iterative_kwargs=["anatomical", "outdir"],
+            hopla_optional=["anatomical", "outdir"],
             hopla_cpus=njobs,
             hopla_logfile=logfile,
             hopla_use_subprocess=True,
