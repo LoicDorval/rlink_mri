@@ -33,7 +33,7 @@ def rename_dfcol(df, suffixe):
         if df.columns[i] in ["participant_id", "session", "run", "site"]:
             new_col.append(df.columns[i])
         else:
-            new_col.append(df.columns[i]+suffixe)
+            new_col.append(df.columns[i] + suffixe)
     df.columns = new_col
     return df
 
