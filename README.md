@@ -116,8 +116,8 @@ Voxel-wise statistics on the skeletonized FA data using FA, MD, ...
   <summary>Paper description (click me)</summary>
 <p>
     <br>
-    <b>Steps:</b> coming soon.<br>
-    <b>Quality control:</b> coming soon.
+    <b>Steps:</b> Once DWI data have been pre-processed, the FA images are nonlinearly registered to the ENIGMA template. All subjects' FA and MD data are then projected onto the ENIGMA FA skeleton.<br>
+    <b>Quality control:</b> We manually checked the FA images that have been registered.
 </p>
 <p align='right'>
     <b>- NeuroSpin support team</b> <i>(Ways to Simplify Your Writing)</i>
@@ -133,7 +133,7 @@ intermediate Lithium and Hydrogen T1w images.
   <summary>Paper description (click me)</summary>
 <p>
     <br>
-    <b>Steps:</b> Lithium and Hydrogen T1w images are bias field corrected with FSL (<b>Jenkinson and Smith (2001)</b>). Then registration steps are performed with ANTS (<b>Avants et al. (2009)</b>). An affine transformation with 9 degrees of freedom (no shearing) coregisters the Lithium T1w and the Hydrogen T1w images, and an affine/non-linear deformation maps the Hydrogene T1w image to the 2mm isotropic MNI space. To automatically account for different field of views between the Lithium and Lithium T1w images, a translation is estimated from the eyes barycenters. Eyes in the Lithium images are detected by modeling the intensity distribution with a 2-components GMM. The second mode of the distribution enables the definition of a threshold to detect high-intensities locations. After morphological operations the two principal components are the eyes.<br>
+    <b>Steps:</b> Lithium and Hydrogen T1w images are bias field corrected with FSL (<b>Jenkinson and Smith (2001)</b>). Then registration steps are performed with ANTS (<b>Avants et al. (2009)</b>). An affine transformation with 9 degrees of freedom (no shearing) coregisters the Lithium T1w and the Hydrogen T1w images, and an affine/non-linear deformation maps the Hydrogene T1w image to the 2mm isotropic MNI space. We assume that the Lithium and Lithium T1w images have the same field of view.<br>
       <b>Quality control:</b> coming soon.
 </p>
 <p align='right'>
