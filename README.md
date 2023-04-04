@@ -100,7 +100,15 @@ corrections.
 <p>
     <br>
     <b>Steps:</b> coming soon.<br>
-    <b>Quality control:</b> coming soon.
+    <b>Quality control:</b> The DMRIprep quality control process includes an automated check for the FA value of five specific bundles. These bundles are:
+
+    - "Genu_of_corpus_callosum_med_fa" 
+    - "Body_of_corpus_callosum_med_fa"
+    - "Splenium_of_corpus_callosum_med_fa"
+    - "Corticospinal_tract_L_med_fa"
+    - "Corticospinal_tract_R_med_fa"
+
+    The acceptable range for their FA values is from 0.3 to 0.75.
 </p>
 <p align='right'>
     <b>- NeuroSpin support team</b> <i>(Ways to Simplify Your Writing)</i>
