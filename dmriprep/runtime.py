@@ -103,11 +103,11 @@ def run(datadir, outdir, simg_file, name="dmriprep",
                   f"'{sub_ses}'")
             continue
         bval_files = ",".join(_bval)
+
         # json
         _json = glob.glob(os.path.join(sub_ses, "dwi",
                                        "*_acq-DWI*_run-*_dwi.json"))
         _json.sort()
-
         if len(_json) != 2:
             print(f"this sub and session don't have 2 .json : "
                   f"'{sub_ses}'")
@@ -116,28 +116,25 @@ def run(datadir, outdir, simg_file, name="dmriprep",
         # PhaseEncodingAxis and EstimatedTotalReadoutTime
         _pe = []
         _readout = []
-        error_flag = False
         for file in _json:
+            data = {}
             with open(file, 'r') as json_file:
                 try:
-                    # load the JSON data from the file
                     data = json.load(json_file)
                 except json.decoder.JSONDecodeError as e:
-                    error_flag = True
                     print(f"JSONDecodeError occured in {file}. Error "
                           f"message: {e}")
+                    continue
                 except FileNotFoundError as e:
-                    error_flag = True
                     print(f"FileNotFoundError occured in {file}. Error "
                           f"message: {e}")
-            if "PhaseEncodingDirection" in data.keys():
+                    continue
+            if data.get("PhaseEncodingDirection") is not None:
                 _pe.append(str(data["PhaseEncodingDirection"]))
-            if "TotalReadoutTime" in data.keys():
+            if data.get("TotalReadoutTime") is not None:
                 _readout.append(str(data["TotalReadoutTime"]))
-            if "EstimatedTotalReadoutTime" in data.keys():
+            if data.get("EstimatedTotalReadoutTime") is not None:
                 _readout.append(str(data["EstimatedTotalReadoutTime"]))
-        if error_flag is True:
-            continue
         if len(_pe) != 2:
             print(f"this sub and session don't have 2 PhaseEncodingAxis "
                   f"values : '{sub_ses}'")
@@ -150,13 +147,11 @@ def run(datadir, outdir, simg_file, name="dmriprep",
         readout_extracted = ",".join(_readout)
 
         # Outdir
-        only_sub_ses = "/".join(sub_ses.split("/")[-2:])
-        # _outdir = sub_ses.replace("rawdata", "derivatives/prequal")
+        only_sub_ses = os.sep.join(sub_ses.split("/")[-2:])
         _outdir = os.path.join(outdir, name, only_sub_ses)
         if not os.path.isdir(_outdir):
             os.makedirs(_outdir)
 
-        print(_outdir)
         # Append in list
         list_outdir.append(_outdir)
         list_dwi.append(dwi_files)
@@ -185,19 +180,7 @@ def run(datadir, outdir, simg_file, name="dmriprep",
             for item in (list_dwi, list_bvec, list_bval, list_pe,
                          list_readout, list_outdir)]
     print("{:>8} {:>8} {:>8} {:>8}".format(*last))
-    if len(list_outdir) != len(list_dwi)\
-       or len(list_outdir) != len(list_bvec)\
-       or len(list_outdir) != len(list_bval)\
-       or len(list_outdir) != len(list_readout)\
-       or len(list_outdir) != len(list_pe):
-        print("error, all the list are not the same size :")
-        print(f"outdir : {len(list_outdir)}\n"
-              f"dwi : {len(list_dwi)}\n"
-              f"bvec : {len(list_bvec)}\n"
-              f"bval : {len(list_bval)}\n"
-              f"readout time : {len(list_readout)}\n"
-              f"phase encoding direction : {len(list_pe)}")
-        return 1
+
     if process:
         pbs_kwargs = {}
         if use_pbs:

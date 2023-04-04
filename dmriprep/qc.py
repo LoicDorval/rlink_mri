@@ -49,4 +49,5 @@ def qc(datadir, regex, outdir, simg_file,
             print(line.decode('utf8'))
 
 
-fire.Fire(qc)
+if __name__ == "__main__":
+    fire.Fire(qc)

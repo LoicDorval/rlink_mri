@@ -40,9 +40,12 @@ References:
 [20] Jeurissen, B. et al. (2014). Automated correction of improperly rotated diffusion gradient orientations in diffusion weighted MRI. Medical image analysis, 18(7), 953-962.
 
 # dmriprep qc
-automatic qc with fa value of 5 bundle ["Genu_of_corpus_callosum_med_fa", 
-                                        "Body_of_corpus_callosum_med_fa",
-                                        "Splenium_of_corpus_callosum_med_fa",
-                                        "Corticospinal_tract_L_med_fa",
-                                        "Corticospinal_tract_R_med_fa"]
-Must be between 0.3 and 0.75.
+The DMRIprep quality control process includes an automated check for the FA value of five specific bundles. These bundles are:
+
+    - "Genu_of_corpus_callosum_med_fa" 
+    - "Body_of_corpus_callosum_med_fa"
+    - "Splenium_of_corpus_callosum_med_fa"
+    - "Corticospinal_tract_L_med_fa"
+    - "Corticospinal_tract_R_med_fa"
+
+The acceptable range for their FA values is from 0.3 to 0.75.
