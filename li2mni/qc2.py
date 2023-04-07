@@ -30,8 +30,8 @@ def make_csv(hanat_regex, outdir, template_mni="", participants=None):
                   for i in list_sujet_hanat]
     roots = [i.split("hanat")[0] for i in list_sujet_hanat]
     fsl_commands = []
-    for i in roots:
-        fsleyes = (f'export TMP_DIR_FOR_FSL="{i}"; '
+    for root in roots:
+        fsleyes = (f'export TMP_DIR_FOR_FSL="{root}"; '
                    'fsleyes $TMP_DIR_FOR_FSL/li2hanat.nii.gz '
                    '$TMP_DIR_FOR_FSL/hanat.nii.gz '
                    '$TMP_DIR_FOR_FSL/h2mnianat.nii.gz '
