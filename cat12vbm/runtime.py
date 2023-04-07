@@ -13,7 +13,6 @@ import os
 import fire
 import glob
 import datetime
-import collections
 from hopla.converter import hopla
 
 

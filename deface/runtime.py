@@ -13,7 +13,6 @@ import os
 import fire
 import glob
 import datetime
-import collections
 from hopla.converter import hopla
 
 
@@ -102,7 +101,7 @@ def run(datadir, outdir, simg_file, cmd=None, name="deface", process=False,
         logfile = os.path.join(logdir, f"{name}_{date}.log")
         if cmd is None:
             cmd = (f"singularity run --bind {os.path.dirname(datadir)} "
-                   f"--cleanenv  {simg_file} brainprep deface")
+                   f"--cleanenv {simg_file} brainprep deface")
         status, exitcodes = hopla(
             cmd,
             anatomical=anat_files,
