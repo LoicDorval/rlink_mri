@@ -1,15 +1,25 @@
-import pandas as pd
-import glob
-import fire
+# -*- coding: utf-8 -*-
+##########################################################################
+# NSAp - Copyright (C) CEA, 2023
+# Distributed under the terms of the CeCILL-B license, as published by
+# the CEA-CNRS-INRIA. Refer to the LICENSE file or to
+# http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
+# for details.
+##########################################################################
+
+
+# Imports
 import os
+import glob
+import pandas as pd
 
 
 def psc2_to_site(psc2, ses, df):
     return df[df["participant_id"] == psc2][f"{ses}_center"].values[0]
 
 
-def make_csv(hanat_regex, outdir, template_mni="", participants=None):
-    """ Launch the li2mni quality control workflow.
+def make_csv(hanat_regex, outdir, template_mni=None, participants=None):
+    """ Launch the li2mni preprocessing quality control workflow.
 
     Parameters
     ----------
@@ -17,18 +27,14 @@ def make_csv(hanat_regex, outdir, template_mni="", participants=None):
         regex to hanat.nii.gz files
     outdir: str
         path to the destination folder.
-
-    Optionnal
-    ---------
-    template_mni: str
+    template_mni: str, default None
         path to the mni template nifti file.
-    participants: str
+    participants: str, default None
         path to the participants.tsv file (in order to get site in the qc.csv)
     """
     list_sujet_hanat = glob.glob(hanat_regex)
-    list_sujet = [i.split("li2mni/")[1].split("/ses-M")[0]
-                  for i in list_sujet_hanat]
-    roots = [i.split("hanat")[0] for i in list_sujet_hanat]
+    list_sujet = [path.split(os.sep)[-3] for path in list_sujet_hanat]
+    roots = [path.split("hanat")[0] for path in list_sujet_hanat]
     fsl_commands = []
     for root in roots:
         fsleyes = (f'export TMP_DIR_FOR_FSL="{root}"; '
@@ -37,7 +43,7 @@ def make_csv(hanat_regex, outdir, template_mni="", participants=None):
                    '$TMP_DIR_FOR_FSL/h2mnianat.nii.gz '
                    '$TMP_DIR_FOR_FSL/li2mnianat.nii.gz '
                    '$TMP_DIR_FOR_FSL/li2mni.nii.gz '
-                   f'{template_mni}')
+                   f'{template_mni or ""}')
         print(fsleyes)
         fsl_commands.append(fsleyes)
 
@@ -54,12 +60,11 @@ def make_csv(hanat_regex, outdir, template_mni="", participants=None):
             df_qc.loc[index, "site"] = site
     df_qc = df_qc.reindex(columns=["participant_id", "ses", "site", "fsleyes",
                                    "visual_qc_score", "qc"])
-
     df_qc.sort_values(by=['participant_id'], inplace=True)
     print(df_qc)
-
     df_qc.to_csv(os.path.join(outdir, "qc.csv"), sep="\t", index=False)
 
 
 if __name__ == "__main__":
+    import fire
     fire.Fire(make_csv)

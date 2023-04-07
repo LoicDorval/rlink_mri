@@ -8,7 +8,6 @@
 ##########################################################################
 
 # Imports
-import fire
 import subprocess
 
 
@@ -20,44 +19,40 @@ def qc(datadir, regex, outdir, simg_file,
     ----------
     datadir: str
         folder to mount inside the containeur, must contain the data and the
-        outdir. (derivatives folder should be ok)
+        outdir (derivatives folder should be ok).
     regex: str
         regex to the dmriprep 'stats.csv' files.
     outdir: str
-        path to the destination folder.
-
-    Optionnal
-    ---------
-    cmd: str
+        path to the BIDS derivatives directory.
+    simg_file: str
+        path to the brainprep singularity image.
+    cmd: str, default None
         path to the local install of brainprep.
-    thr_low: float
-        lower treshold for outlier selection.
-    thr_up: float
-        upper treshold for outlier selection.
     sub_idx: int, default -4
         the position of the subject identifier in the input path.
+    thr_low: float, defaultt 0.3
+        FA lower treshold for outlier selection.
+    thr_up: float, default 0.75
+        FA upper treshold for outlier selection.
     """
     if cmd is None:
-        _cmd = (f"singularity run --bind {datadir} --cleanenv "
-                f"{simg_file} brainprep dmriprep-qc "
-                f"--data_regex {regex} "
-                f"--outdir {outdir} "
-                f"--sub_idx {sub_idx} "
-                f"--thr_low {thr_low} "
-                f"--thr_up {thr_up}")
+        cmd = (f"singularity run --bind {datadir} --cleanenv "
+               f"{simg_file} brainprep dmriprep-qc ")
+
     else:
-        _cmd = "python3 " + cmd + (" dmriprep-qc "
-                                   f"--data_regex {regex} "
-                                   f"--outdir {outdir} "
-                                   f"--sub_idx {sub_idx} "
-                                   f"--thr_low {thr_low} "
-                                   f"--thr_up {thr_up}")
-    with subprocess.Popen(_cmd.split(' '),
+        cmd = f"python3 {cmd} dmriprep-qc "
+    cmd += (f"--data_regex {regex} "
+            f"--outdir {outdir} "
+            f"--sub_idx {sub_idx} "
+            f"--thr_low {thr_low} "
+            f"--thr_up {thr_up}")
+    with subprocess.Popen(cmd.split(" "),
                           stdout=subprocess.PIPE,
                           stderr=subprocess.STDOUT) as process:
         for line in process.stdout:
-            print(line.decode('utf8'))
+            print(line.decode("utf8"))
 
 
 if __name__ == "__main__":
+    import fire
     fire.Fire(qc)

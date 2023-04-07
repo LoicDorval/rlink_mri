@@ -7,13 +7,12 @@
 # for details.
 ##########################################################################
 
-
 # Imports
 import os
-import fire
+import json
 import glob
 import datetime
-import json
+import traceback
 from hopla.converter import hopla
 
 
@@ -30,22 +29,6 @@ def get_best_anat(files):
         raise ValueError("No anatomical file provided!")
 
 
-def get_sub_ses(path):
-    """
-    Give a list of path/sub-*/ses-* for all existing possibility from the
-    directory path
-    """
-    sub_dirs = [d for d in os.listdir(path) if d.startswith("sub-")
-                and os.path.isdir(os.path.join(path, d))]
-    sub_ses_dirs = []
-    for sub_dir in sub_dirs:
-        for ses_dir in os.listdir(os.path.join(path, sub_dir)):
-            if ses_dir.startswith("ses-") \
-               and os.path.isdir(os.path.join(path, sub_dir, ses_dir)):
-                sub_ses_dirs.append(os.path.join(path, sub_dir, ses_dir))
-    return sub_ses_dirs
-
-
 def run(datadir, outdir, simg_file, name="dmriprep",
         process=False, njobs=10, use_pbs=False, test=False):
     """ Parse data and execute the processing with hopla.
@@ -56,6 +39,8 @@ def run(datadir, outdir, simg_file, name="dmriprep",
         path to the BIDS rawdata directory.
     outdir: str
         path to the BIDS derivatives directory.
+    simg_file: str
+        path to the brainprep singularity image.
     name: str, default 'dmriprep'
         the name of the cirrent analysis.
     process: bool, default False
@@ -64,70 +49,59 @@ def run(datadir, outdir, simg_file, name="dmriprep",
         the number of parallel jobs.
     use_pbs: bool, default False
         optionnaly use PBSPRO batch submission system.
-    cmd: str, default 'limri'
-        the command to execute.
     test: bool, default False
         optionnaly, select only one subject.
     """
-    list_sub_ses = get_sub_ses(datadir)
-    list_dwi, list_bvec, list_bval, list_pe, list_readout, list_outdir = \
-        [], [], [], [], [], []
+    list_sub_ses = [
+        path for path in glob.glob(os.path.join(datadir, "sub-*", "ses-*"))
+        if os.path.isdir(path)]
+    list_dwi, list_bvec, list_bval, list_pe, list_readout, list_outdir = (
+        [], [], [], [], [], [])
     for sub_ses in list_sub_ses:
-        # Verify all the mandatory file for prequal launch
-        # dwi
+
+        # Check input DWI data
         _dwi = glob.glob(os.path.join(sub_ses, "dwi",
                                       "*_acq-DWI*_run-*_dwi.nii.gz"))
         _dwi.sort()
         if len(_dwi) != 2:
-            print(f"this sub and session don't have 2 dwi.nii.gz : "
-                  f"'{sub_ses}'")
+            print(f"The current session don't have 2 valid TOPUP DWI files: "
+                  f"{sub_ses}")
             continue
         dwi_files = ",".join(_dwi)
-
-        # bvec
         _bvec = glob.glob(os.path.join(sub_ses, "dwi",
                                        "*_acq-DWI*_run-*_dwi.bvec"))
         _bvec.sort()
         if len(_bvec) != 2:
-            print(f"this sub and session don't have 2 .bvec : "
-                  f"'{sub_ses}'")
+            print(f"The current session don't have 2 BVEC files: "
+                  f"{sub_ses}")
             continue
         bvec_files = ",".join(_bvec)
-
-        # bval
         _bval = glob.glob(os.path.join(sub_ses, "dwi",
                                        "*_acq-DWI*_run-*_dwi.bval"))
         _bval.sort()
         if len(_bval) != 2:
-            print(f"this sub and session don't have 2 .bval : "
-                  f"'{sub_ses}'")
+            print(f"The current session don't have 2 BVAL files: "
+                  f"{sub_ses}")
             continue
         bval_files = ",".join(_bval)
-
-        # json
         _json = glob.glob(os.path.join(sub_ses, "dwi",
                                        "*_acq-DWI*_run-*_dwi.json"))
         _json.sort()
         if len(_json) != 2:
-            print(f"this sub and session don't have 2 .json : "
-                  f"'{sub_ses}'")
+            print(f"The current session don't have 2 JSON sidecars: "
+                  f"{sub_ses}")
             continue
 
         # PhaseEncodingAxis and EstimatedTotalReadoutTime
         _pe = []
         _readout = []
-        for file in _json:
+        for path in _json:
             data = {}
-            with open(file, 'r') as json_file:
+            with open(path, "r") as of:
                 try:
-                    data = json.load(json_file)
-                except json.decoder.JSONDecodeError as e:
-                    print(f"JSONDecodeError occured in {file}. Error "
-                          f"message: {e}")
-                    continue
-                except FileNotFoundError as e:
-                    print(f"FileNotFoundError occured in {file}. Error "
-                          f"message: {e}")
+                    data = json.load(of)
+                except:
+                    traceback.print_exc()
                     continue
             if data.get("PhaseEncodingDirection") is not None:
                 _pe.append(str(data["PhaseEncodingDirection"]))
@@ -136,13 +110,13 @@ def run(datadir, outdir, simg_file, name="dmriprep",
             if data.get("EstimatedTotalReadoutTime") is not None:
                 _readout.append(str(data["EstimatedTotalReadoutTime"]))
         if len(_pe) != 2:
-            print(f"this sub and session don't have 2 PhaseEncodingAxis "
-                  f"values : '{sub_ses}'")
+            print(f"The current session don't have 2 phase encoding axis: "
+                  f"{sub_ses}")
             continue
         pe_extracted = ",".join(_pe)
         if len(_readout) != 2:
-            print(f"this sub and session don't have 2 "
-                  f"EstimatedTotalReadoutTime values : '{sub_ses}'")
+            print(f"The current session don't don't have 2 readout time: "
+                  f"{sub_ses}")
             continue
         readout_extracted = ",".join(_readout)
 
@@ -170,7 +144,6 @@ def run(datadir, outdir, simg_file, name="dmriprep",
     print(f"number of runs: {len(list_dwi)}")
     header = ["dwi", "bvec", "bval", "pe", "readout_time", "ouput_dir"]
     print("{:>8} {:>8} {:>8} {:>8}".format(*header))
-
     first = [item[0].replace(datadir, "").replace(outdir, "")
              for item in (list_dwi, list_bvec, list_bval, list_pe,
                           list_readout, list_outdir)]
@@ -219,4 +192,5 @@ def run(datadir, outdir, simg_file, name="dmriprep",
 
 
 if __name__ == "__main__":
+    import fire
     fire.Fire(run)
