@@ -41,7 +41,7 @@ def create_pdf(png_folder, pdf_output, pattern, font):
             # Draw the title on the image
             draw.text((x, y), title, font=font, fill=(0, 0, 0))
             # Save the image as a PDF page
-            tmp_outdir = os.path.join(tmpdir+'/page{}.pdf'.format(idx+1))
+            tmp_outdir = os.path.join(tmpdir + '/page{}.pdf'.format(idx + 1))
             image.save(tmp_outdir, 'PDF',
                        resolution=100.0)
         # Merge the PDF pages into a single file
