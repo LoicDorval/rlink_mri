@@ -15,12 +15,12 @@ The following processings are available in the derivatives folder.
 
 ##### Table of Contents  
 
-[Defacing](#deface)  
-[Quasi-Raw](#quasiraw)  
-[CAT12VBM](#cat12vbm)  
-[FreeSurfer](#freesurfer)  
-[dMRIprep](#dmriprep)  
-[TBSS](#tbss)  
+[Defacing](#deface)
+[Quasi-Raw](#quasiraw)
+[CAT12VBM](#cat12vbm)
+[FreeSurfer](#freesurfer)
+[dMRIprep](#dmriprep)
+[TBSS](#tbss)
 [Li2MNI](#li2mni)
 
 ## deface
@@ -101,16 +101,15 @@ corrections.
     <br>
     <b>Steps:</b> The diffusion data were preprocessed and quality-checked with the following pipeline built around MRTrix3 (Tournier et al. 2019), FSL (Jenkinson et al. 2012), and ANTs (Tustinson 2014) software packages. First, any volumes with a corresponding b value less than 50 were treated as b0 volume for the remainder of the pipeline. The diffusion data were denoised with the provided dwidenoise (MP-PCA) function included with MRTrix3 (Veraart et al. 2016, Cordero-Grande et al. 2019). The images were then intensity-normalized to the first image and concatenated for further processing. FSL's topup and eddy algorithms were used to correct for susceptibilty-induced and motion artifacts and eddy currents and to remove outlier slices (Andersson, et al. 2003, Smith, et al.2004, Andersson, et al. 2016). Lastly, the preprocessed data were fitted with a tensor model using the
 dwi2tensor function included with MRTrix3 using an iterative reweighted least squares estimator (Veraart et al. 2013).<br>
-    <b>Quality control:</b>  The quality of this preprocessing pipeline was then assessed qualitatively for gross errors and quantitatively analyzed using a three-step approach. In the first step, the preprocessed data were analyzed in accordance with the method outlined by Lauzon (Lauzon et al. 2013). The brain parenchyma without CSF were masked in a restrictive manner by using an eroded brain mask generated on the average b0 image using the bet2 function included with FSL (Smith et al. 2002). Then, the tensor fits of the masked data were backpropagated through the diffusion model to reconstruct the original diffusion signal. The goodness-of-fit for the tensor model was then assessed using a modified pixel chi-squared value per slice per volume. In the second step, the tensor fit was converted to a fractional anisotropy (FA) image. The ICBM FA MNI atlas with 48 white matter tract labels provided with FSL were then non-rigidly registered to the subject's FA image with the ANTs software package (Mori, et al. 2005, Wakana et al. 2007, Hua et al. 2008, Avants et al. 2008). The average FA for each tract was then quantified and assessed for physiologic congruence. Lastly, the gradient orientations were visualized and checked using the dwigradcheck script included with MRTrix (Jeurissen, 2014).
-    Then we automate the process by checking for the FA value of five specific bundles. These bundles are:
-
+    <b>Quality control:</b>  The quality of this preprocessing pipeline was then assessed qualitatively for gross errors and quantitatively analyzed using a three-step approach. In the first step, the preprocessed data were analyzed in accordance with the method outlined by Lauzon (Lauzon et al. 2013). The brain parenchyma without CSF were masked in a restrictive manner by using an eroded brain mask generated on the average b0 image using the bet2 function included with FSL (Smith et al. 2002). Then, the tensor fits of the masked data were backpropagated through the diffusion model to reconstruct the original diffusion signal. The goodness-of-fit for the tensor model was then assessed using a modified pixel chi-squared value per slice per volume. In the second step, the tensor fit was converted to a fractional anisotropy (FA) image. The ICBM FA MNI atlas with 48 white matter tract labels provided with FSL were then non-rigidly registered to the subject's FA image with the ANTs software package (Mori, et al. 2005, Wakana et al. 2007, Hua et al. 2008, Avants et al. 2008). The average FA for each tract was then quantified and assessed for physiologic congruence. Lastly, the gradient orientations were visualized and checked using the dwigradcheck script included with MRTrix (Jeurissen, 2014). Then we automate the process by checking for the FA value of five specific bundles:
+    
     - Genu_of_corpus_callosum_med 
     - Body_of_corpus_callosum_med
     - Splenium_of_corpus_callosum_med
     - Corticospinal_tract_L_med
     - Corticospinal_tract_R_med
-
-    Mean FA values must range in [0.3, 0.75].
+    
+Mean FA values must range in [0.3, 0.75].
 </p>
 <p align='right'>
     <b>- NeuroSpin support team</b> <i>(Ways to Simplify Your Writing)</i>
