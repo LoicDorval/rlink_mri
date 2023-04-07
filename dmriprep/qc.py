@@ -7,65 +7,57 @@
 # for details.
 ##########################################################################
 
-
 # Imports
-import os
 import fire
-import glob
-import datetime
-import collections
-from hopla.converter import hopla
+import subprocess
 
 
-def run(datadir, outdir, simg_file=None, cmd=None, name="dmriprep-qc",
-        process=False, njobs=10):
-    """ Parse data and execute the processing with hopla.
+def qc(datadir, regex, outdir, simg_file,
+       cmd=None, sub_idx=-4, thr_low=0.3, thr_up=0.75):
+    """ Launch the dMRI pre-processing quality control workflow.
 
     Parameters
     ----------
     datadir: str
-        path to the BIDS derivatives dmriprep directory.
+        folder to mount inside the containeur, must contain the data and the
+        outdir. (derivatives folder should be ok)
+    regex: str
+        regex to the dmriprep 'stats.csv' files.
     outdir: str
-        path to the BIDS derivatives directory.
-    simg_file: str
-        path to the brainprep singularity image.
-    cmd: str, default None
-        optionnaly, overload the execution command.
-    name: str, default 'dmriprep-qc'
-        the name of the cirrent analysis.
-    process: bool, default False
-        optionnaly launch the process.
-    njobs: int, default 10
-        the number of parallel jobs.
+        path to the destination folder.
+
+    Optionnal
+    ---------
+    cmd: str
+        path to the local install of brainprep.
+    thr_low: float
+        lower treshold for outlier selection.
+    thr_up: float
+        upper treshold for outlier selection.
+    sub_idx: int, default -4
+        the position of the subject identifier in the input path.
     """
-    regex = os.path.join(datadir, "sub-*", "ses-*", "STATS", "stats.csv")
-    _outdir = os.path.join(outdir, name)
-    if not os.path.isdir(_outdir):
-        os.makdir(_outdir)
-    if process:
-        date = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-        logdir = os.path.join(outdir, "logs")
-        if not os.path.isdir(logdir):
-            os.makedirs(logdir)
-        logfile = os.path.join(logdir, f"{name}_{date}.log")
-        if cmd is None:
-            cmd = (f"singularity run --bind {os.path.dirname(datadir)} "
-                   f"--cleanenv  {simg_file} brainprep dmriprep-qc")
-        else:
-            cmd = f"{cmd} dmriprep-qc"
-        status, exitcodes = hopla(
-            cmd,
-            data_regex=[f"'{regex}'"],
-            outdir=_outdir,
-            hopla_name_replace=True,
-            hopla_iterative_kwargs=["data-regex"],
-            hopla_optional=["data-regex", "outdir"],
-            hopla_cpus=njobs,
-            hopla_logfile=logfile,
-            hopla_use_subprocess=True,
-            hopla_verbose=1,
-            hopla_python_cmd=None)
+    if cmd is None:
+        _cmd = (f"singularity run --bind {datadir} --cleanenv "
+                f"{simg_file} brainprep dmriprep-qc "
+                f"--data_regex {regex} "
+                f"--outdir {outdir} "
+                f"--sub_idx {sub_idx} "
+                f"--thr_low {thr_low} "
+                f"--thr_up {thr_up}")
+    else:
+        _cmd = "python3 " + cmd + (" dmriprep-qc "
+                                   f"--data_regex {regex} "
+                                   f"--outdir {outdir} "
+                                   f"--sub_idx {sub_idx} "
+                                   f"--thr_low {thr_low} "
+                                   f"--thr_up {thr_up}")
+    with subprocess.Popen(_cmd.split(' '),
+                          stdout=subprocess.PIPE,
+                          stderr=subprocess.STDOUT) as process:
+        for line in process.stdout:
+            print(line.decode('utf8'))
 
 
 if __name__ == "__main__":
-    fire.Fire(run)
+    fire.Fire(qc)
