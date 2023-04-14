@@ -141,7 +141,7 @@ intermediate Lithium and Hydrogen T1w images.
   <summary>Paper description (click me)</summary>
 <p>
     <br>
-    <b>Steps:</b> Lithium and Hydrogen T1w images are bias field corrected with FSL (<b>Jenkinson and Smith (2001)</b>). Then registration steps are performed with ANTS (<b>Avants et al. (2009)</b>). An affine transformation with 9 degrees of freedom (no shearing) coregisters the Lithium T1w and the Hydrogen T1w images, and an affine/non-linear deformation maps the Hydrogene T1w image to the 2mm isotropic MNI space. We assume that the Lithium and Lithium T1w images have the same field of view.<br>
+    <b>Steps:</b> Lithium and Hydrogen T1w images are bias field corrected with FSL (<b>Jenkinson and Smith (2001)</b>). Then registration steps are performed with ANTS (<b>Avants et al. (2009)</b>). An affine transformation with 9 degrees of freedom (no shearing) coregisters the Lithium T1w and the Hydrogen T1w images, and an affine/non-linear deformation maps the Hydrogene T1w image to the 2mm isotropic MNI space. We assume that the Lithium and Lithium T1w images have the same field of view. Finally, we use the phantom data to calibrate the lithium image intensities by applying a global scaling.<br>
       <b>Quality control:</b> coming soon.
 </p>
 <p align='right'>

@@ -4,7 +4,8 @@ See the [main documentation](https://github.com/rlink7/rlink_mri/blob/main/READM
 
 The code is organized in two parts:
 
-* **runtime.py**: performs the analysis with hopla (by default in a multi-cpus setting).
+* **runtime1.py**: performs the registration with hopla (by default in a multi-cpus setting).
+* **runtime2.py**: performs the calibration with hopla (by default in a multi-cpus setting).
 * **qc1.py**: creates the .csv to manually perform the quality check for the T1wLi file and all the Li part-mag lithium images. 
 
   Visual QC code for T1wLi:
