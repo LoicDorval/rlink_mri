@@ -1,17 +1,27 @@
-# System import
-import fire
+# -*- coding: utf-8 -*-
+##########################################################################
+# NSAp - Copyright (C) CEA, 2023
+# Distributed under the terms of the CeCILL-B license, as published by
+# the CEA-CNRS-INRIA. Refer to the LICENSE file or to
+# http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
+# for details.
+##########################################################################
+
+
+# Imports
 import os
 import nibabel
+import tempfile
 import numpy as np
+import pandas as pd
+from tqdm import tqdm
 from nilearn import plotting
 import matplotlib.pyplot as plt
-from PIL import Image, ImageDraw, ImageFont
-import tempfile
 from pdf2image import convert_from_path
-import pandas as pd
+from PIL import Image, ImageDraw, ImageFont
 
 
-def create_pdf(png_folder, pdf_output, pattern, font):
+def create_pdf(png_folder, pdf_output, pattern, font=None):
     with tempfile.TemporaryDirectory() as tmpdir:
         images = []
         titles = []
@@ -27,24 +37,17 @@ def create_pdf(png_folder, pdf_output, pattern, font):
                     images.append(Image.open(os.path.join(png_folder, name))
                                   .convert('RGB'))
                     titles.append(name)
-        # # Create the font and size for the title
-        font = ImageFont.truetype(font, size=70)
-
-        # Add the title to each image
+        if font is not None:
+            font = ImageFont.truetype(font, size=70)
         for idx, image in enumerate(images):
-            # Create a new ImageDraw object
             draw = ImageDraw.Draw(image)
-            # Set the position and text for the title
             title = titles[idx]
             x = 20
             y = 20
-            # Draw the title on the image
             draw.text((x, y), title, font=font, fill=(0, 0, 0))
-            # Save the image as a PDF page
-            tmp_outdir = os.path.join(tmpdir+'/page{}.pdf'.format(idx+1))
-            image.save(tmp_outdir, 'PDF',
+            tmp_outdir = os.path.join(tmpdir + f"page{idx + 1}.pdf")
+            image.save(tmp_outdir, "PDF",
                        resolution=100.0)
-        # Merge the PDF pages into a single file
         pdf_pages = [convert_from_path(os.path.join(tmpdir, i))[0]
                      for i in os.listdir(tmpdir)
                      if i.endswith(".pdf")]
@@ -57,7 +60,6 @@ def create_pdf(png_folder, pdf_output, pattern, font):
 def make_png(anatomical, outdir, pattern="T1wli"):
     im = nibabel.load(anatomical)
     arr = im.get_fdata()
-
     outfile = os.path.join(outdir, f"{pattern}.png")
     plotting.plot_anat(im, display_mode="z",
                        cut_coords=25, black_bg=True,
@@ -85,48 +87,40 @@ def psc2_to_site(psc2, ses, df):
     return df[df["participant_id"] == psc2][f"{ses}_center"].values[0]
 
 
-def all(list_nii, outdir, font, pattern="T1wli", skip_png=False,
-        participants=None, skip_pdf=False):
+def all(list_nii, outdir, font=None, pattern="T1wLi", skip_png=False,
+        skip_pdf=False, participants=None):
     """ Launch the lithium rawdata quality control workflow.
 
     Parameters
     ----------
     list_nii: str
-        path to a .txt with one line per .nii.gz
-    pattern: str
-        should be Li or T1wLi
+        path to a .txt with one line per Nifti image.
     outdir: str
         path to the destination folder.
-    font:
+    font: str, default None
         path to the font file .ttf
-    Optionnal
-    ---------
-    skip_png: bool
+    pattern: str, default 'T1wLi'
+        should be Li or T1wLi.
+    skip_png: bool, default False
         skip png creation step.
-    skip_pdf: float
+    skip_pdf: float, default False
         skip pdf creation step.
-    participants: str
-        path to the participants.tsv file (in order to get site in the qc.csv)
+    participants: str, default None
+        path to the participants.tsv file (in order to get site in the qc.csv).
     """
-    print("Start")
-    if skip_png is False:
+    if not skip_png:
         path_images = get_anat(list_nii)
-        count_max = len(path_images)
-        for index, image in enumerate(path_images):
+        for index, image in tqdm(enumerate(path_images)):
             pattern_png = os.path.basename(image).rstrip(".nii.gz")
             make_png(image, outdir, pattern=pattern_png)
-            print(f"{index+1}/{count_max}")
     outdir_png = os.path.join(outdir, f"concat_{pattern}.pdf")
-    print("making pdf")
-    if skip_pdf is False:
+    if not skip_pdf:
         create_pdf(outdir, outdir_png, pattern, font)
     csv = outdir_png.replace(".pdf", ".csv")
-    print("making csv")
     if participants is not None:
         df_participants = pd.read_csv(participants, sep="\t").fillna(0)
     df = pd.read_csv(csv, sep="\t")
     df["site"] = 0
-    print(df)
     if pattern == "T1wLi":
         df["rec"] = ""
     for index, row in df.iterrows():
@@ -147,11 +141,11 @@ def all(list_nii, outdir, font, pattern="T1wli", skip_png=False,
     else:
         df = df.reindex(columns=["participant_id", "ses", "site",
                                  "visual_qc_score", "qc"])
-
-    df.sort_values(by=['participant_id'], inplace=True)
+    df.sort_values(by=["participant_id"], inplace=True)
     print(df)
     df.to_csv(os.path.join(outdir, "qc.csv"), sep="\t", index=False)
 
 
 if __name__ == "__main__":
+    import fire
     fire.Fire(all)

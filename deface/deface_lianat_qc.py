@@ -29,17 +29,8 @@ def get_best_anat(files):
         raise ValueError("No anatomical file provided!")
 
 
-def iter_replace(item, replace, by):
-    """ Iteratively replace by.
-    """
-    if not isinstance(item, list):
-        return item
-    return [sub_item.replace(replace, by) if isinstance(sub_item, str)
-            else sub_item for sub_item in item]
-
-
-def run(datadir, outdir, simg_file, name="cat12vbm", process=False, njobs=10,
-        use_pbs=False, test=False):
+def run(datadir, outdir, simg_file, cmd=None, name="deface", process=False,
+        njobs=10, use_pbs=False, test=False):
     """ Parse data and execute the processing with hopla.
 
     Parameters
@@ -50,7 +41,9 @@ def run(datadir, outdir, simg_file, name="cat12vbm", process=False, njobs=10,
         path to the BIDS derivatives directory.
     simg_file: str
         path to the brainprep singularity image.
-    name: str, default 'cat12vbm'
+    cmd: str, default None
+        optionnaly, overload the execution command.
+    name: str, default 'deface'
         the name of the cirrent analysis.
     process: bool, default False
         optionnaly launch the process.
@@ -61,48 +54,49 @@ def run(datadir, outdir, simg_file, name="cat12vbm", process=False, njobs=10,
     test: bool, default False
         optionnaly, select only one subject.
     """
-    anat_files, sessions, sub_outdirs, is_longs = [], [], [], []
+    anat_files, deface_anat_files, deface_roots = [], [], []
     for subject in os.listdir(datadir):
-        _long_anat_files = []
-        _long_sessions = []
-        for session in ("ses-M00", "ses-M03"):
+        for session in ("ses-M03Li", "ses-M03H"):
             sesdir = os.path.join(datadir, subject, session)
             if not os.path.isdir(sesdir):
                 print(f"no '{sesdir}' session available!")
                 continue
+            if not os.path.isdir(os.path.join(sesdir, "anat")):
+                print("no anat in ses-M03Li")
+                continue
+            _outdir = os.path.join(outdir, name, subject, session)
+            if not os.path.isdir(_outdir):
+                print(f"no '{outdir}' folder available!")
+                continue
             _anat_files = glob.glob(os.path.join(
                 sesdir, "anat", f"sub-*_{session}_*T1w.nii.gz"))
-            _long_anat_files.append(get_best_anat(_anat_files))
-            _long_sessions.append(session)
-        if len(_long_anat_files) == 0:
-            continue
-        _outdir = os.path.join(outdir, name, subject)
-        if not os.path.isdir(_outdir):
-            os.makedirs(_outdir)
-        if len(_long_anat_files) > 1:
-            is_longs.append(True)
-        else:
-            is_longs.append(False)
-        anat_files.append(",".join(_long_anat_files))
-        sessions.append(",".join(_long_sessions))
-        sub_outdirs.append(_outdir)
+            best_anat = get_best_anat(_anat_files)
+            basename = os.path.basename(best_anat)
+            deface_anat = os.path.join(_outdir, basename)
+            if not os.path.isfile(deface_anat):
+                print(f"no '{deface_anat}' file!")
+                continue
+            anat_files.append(best_anat)
+            deface_anat_files.append(deface_anat)
+            root = os.path.join(
+                _outdir, basename.replace("_T1w.nii.gz", "_defacemask"))
+            deface_roots.append(root)
     if len(anat_files) == 0:
         raise RuntimeError("No data to process!")
     if test:
         anat_files = anat_files[:1]
-        sessions = sessions[:1]
-        is_longs = is_longs[:1]
-        sub_outdirs = sub_outdirs[:1]
+        deface_anat_files = deface_anat_files[:1]
+        deface_roots = deface_roots[:1]
     print(f"number of runs: {len(anat_files)}")
-    header = ["anat", "session", "longitudinal", "outdir"]
-    print("{:>8} {:>8} {:>8} {:>8}".format(*header))
-    first = [iter_replace(iter_replace(item[0], datadir, ""), outdir, "")
-             for item in (anat_files, sessions, is_longs, sub_outdirs)]
-    print("{} {} {} {}".format(*first))
+    header = ["anat", "deface", "root"]
+    print("{:>8} {:>8} {:>8}".format(*header))
+    first = [item[0].replace(datadir, "").replace(outdir, "")
+             for item in (anat_files, deface_anat_files, deface_roots)]
+    print("{:>8} {:>8} {:>8}".format(*first))
     print("...")
-    last = [iter_replace(iter_replace(item[-1], datadir, ""), outdir, "")
-            for item in (anat_files, sessions, is_longs, sub_outdirs)]
-    print("{} {} {} {}".format(*last))
+    last = [item[-1].replace(datadir, "").replace(outdir, "")
+            for item in (anat_files, deface_anat_files, deface_roots)]
+    print("{:>8} {:>8} {:>8}".format(*last))
 
     if process:
         pbs_kwargs = {}
@@ -118,20 +112,20 @@ def run(datadir, outdir, simg_file, name="cat12vbm", process=False, njobs=10,
         logdir = os.path.join(outdir, "logs")
         if not os.path.isdir(logdir):
             os.makedirs(logdir)
-        logfile = os.path.join(logdir, f"{name}_{date}.log")
-        cmd = (f"singularity run --bind {os.path.dirname(datadir)} --cleanenv "
-               f"{simg_file} brainprep cat12vbm")
+        logfile = os.path.join(logdir, f"{name}-qc_{date}.log")
+        if cmd is None:
+            cmd = (f"singularity run --bind {os.path.dirname(datadir)} "
+                   f"--cleanenv {simg_file} brainprep deface-qc")
         status, exitcodes = hopla(
             cmd,
             anatomical=anat_files,
-            outdir=sub_outdirs,
-            session=sessions,
-            longitudinal=is_longs,
-            model_long=1,
+            anatomical_deface=deface_anat_files,
+            deface_root=deface_roots,
+            thr_mask=0.6,
             hopla_name_replace=True,
-            hopla_iterative_kwargs=["anatomical", "outdir", "session",
-                                    "longitudinal"],
-            hopla_optional=["anatomical", "outdir", "session", "longitudinal"],
+            hopla_iterative_kwargs=["anatomical", "anatomical-deface",
+                                    "deface-root"],
+            hopla_optional=["anatomical", "anatomical-deface", "deface-root"],
             hopla_cpus=njobs,
             hopla_logfile=logfile,
             hopla_use_subprocess=True,
