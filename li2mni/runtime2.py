@@ -53,39 +53,40 @@ def run(datadir, outdir, phdir, participant_file, name="li2mninorm",
         os.path.dirname(limri.__file__), "resources",
         "MNI152_T1_2mm_brain_mask.nii.gz")
     assert os.path.isfile(mask_file), mask_file
-    li_files, ph_files, sub_outdirs = [], [], []
+    ph_file = os.path.join(phdir, "phantom_mean_value.tsv")
+    ph_df = pd.read_csv(ph_file, sep="\t", dtype=str)
+    ph_ref_vals = dict((_site, _mean) for _site, _mean in zip(
+        ph_df.Site.values, ph_df.Mean._values))
+    li_files, ph_vals, sub_outdirs = [], [], []
     for path in files:
         _outdir = os.path.dirname(path)
         norm_file = os.path.join(_outdir, "li2mninorm.nii.gz")
         if os.path.isfile(norm_file):
+            os.remove(norm_file)
             continue
         _sid = path.split(os.sep)[-3]
         _info = info.loc[info["participant_id"] == _sid]
         _center = int(_info["ses-M03Li_center"].item())
-        if _center in [1, 2]:
-            continue
-        assert _center in [4, 5, 10, 11, 15], f"{_sid} - {_center}"
-        _ph_path = os.path.join(phdir, f"site-{_center}",
-                                f"phantom_site-{_center}_lithium.nii.gz")
-        assert os.path.isfile(_ph_path), _ph_path
+        assert _center in [1, 2, 4, 5, 10, 11, 15], f"{_sid} - {_center}"
+        _ph_val = ph_ref_vals[str(_center)]
         li_files.append(path)
-        ph_files.append(_ph_path)
+        ph_vals.append(_ph_val)
         sub_outdirs.append(_outdir)
     if len(li_files) == 0:
         raise RuntimeError("No data to process!")
     if test:
         li_files = li_files[:1]
-        ph_files = ph_files[:1]
+        ph_vals = ph_vals[:1]
         sub_outdirs = sub_outdirs[:1]
     print(f"number of runs: {len(li_files)}")
     header = ["li", "ph", "outdir"]
     print("{:>8} {:>8} {:>8}".format(*header))
     first = [item[0].replace(datadir, "").replace(phdir, "")
-             for item in (li_files, ph_files, sub_outdirs)]
+             for item in (li_files, ph_vals, sub_outdirs)]
     print("{:>8} {:>8} {:>8}".format(*first))
     print("...")
     last = [item[-1].replace(datadir, "").replace(phdir, "")
-            for item in (li_files, ph_files, sub_outdirs)]
+            for item in (li_files, ph_vals, sub_outdirs)]
     print("{:>8} {:>8} {:>8}".format(*last))
 
     if process:
@@ -106,13 +107,13 @@ def run(datadir, outdir, phdir, participant_file, name="li2mninorm",
         status, exitcodes = hopla(
             "li2mninorm",
             li2mni_file=li_files,
-            li2mniref_file=ph_files,
             mask_file=mask_file,
             outdir=sub_outdirs,
-            norm="minmax",
+            norm="norm",
+            ref_value=ph_vals,
             hopla_name_replace=True,
-            hopla_iterative_kwargs=["li2mni-file", "li2mniref-file", "outdir"],
-            hopla_optional=["li2mni-file", "li2mniref-file", "mask_file",
+            hopla_iterative_kwargs=["li2mni-file", "ref-value", "outdir"],
+            hopla_optional=["li2mni-file", "ref_value", "mask_file",
                             "outdir", "norm"],
             hopla_cpus=njobs,
             hopla_logfile=logfile,
