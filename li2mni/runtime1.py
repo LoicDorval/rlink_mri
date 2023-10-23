@@ -68,8 +68,6 @@ def run(datadir, outdir, name="li2mni", process=False, njobs=10,
     for path in files:
         subject = path.split(os.sep)[-4]
         _outdir = os.path.join(outdir, name, subject, "ses-M03Li")
-        if not os.path.isdir(_outdir):
-            os.makedirs(_outdir)
         _status_file = os.path.join(_outdir, "li2mni.nii.gz")
         if os.path.isfile(_status_file):
             continue
@@ -78,8 +76,10 @@ def run(datadir, outdir, name="li2mni", process=False, njobs=10,
             f"{subject}_ses-M03Li_*T1w.nii.gz"))
         sesdir = os.path.join(os.path.join(datadir, subject, "ses-M03"))
         if not os.path.isdir(sesdir):
-            print(f"no '{sesdir}' session available!")
+            print(f"no '{sesdir}' session available: {sesdir}")
             continue
+        if not os.path.isdir(_outdir):
+            os.makedirs(_outdir)
         _hanat_files = glob.glob(os.path.join(
             sesdir, "anat", f"{subject}_ses-M03_*T1w.nii.gz"))
         li_files.append(path)
