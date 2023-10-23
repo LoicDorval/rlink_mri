@@ -1,3 +1,14 @@
+# -*- coding: utf-8 -*-
+##########################################################################
+# NSAp - Copyright (C) CEA, 2023
+# Distributed under the terms of the CeCILL-B license, as published by
+# the CEA-CNRS-INRIA. Refer to the LICENSE file or to
+# http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
+# for details.
+##########################################################################
+
+
+# Imports
 import fire
 import os
 from nilearn import plotting
@@ -21,8 +32,7 @@ def overlay_nifti(template_file, overlay_file, output_file,
 
 def cohorte(li2mni_path, output_path, norm=False, site=False,
             participants=None, pdf=True, dpi=900):
-    """
-    Launch overlay_nifti on a all cohorte.
+    """ Launch overlay_nifti on a all cohorte.
 
     Parameters
     ----------
@@ -33,14 +43,14 @@ def cohorte(li2mni_path, output_path, norm=False, site=False,
 
     Optionnal
     ---------
-    norm: Bool default False
+    norm: bool default False
         take the li2mni output normalized or not.
-    site: Bool default False
+    site: bool default False
         Reorder the png to a site by site.
     participants: Bool default None
         path to the participants.tsv file. WARNING this flags is mandatory if
         site=True
-    pdf: Bool
+    pdf: bool
         make a concatenation pdf of site by site png, work only if site=True
     dpi: int default=900
         dot per inch of the png created.
@@ -57,7 +67,7 @@ def cohorte(li2mni_path, output_path, norm=False, site=False,
             output = os.path.join(output_path, f"{sub}_overlay_mni_norm")
 
         if os.path.isfile(template) and os.path.isfile(overlay)\
-           and os.path.isfile(output+".png") is False:
+           and os.path.isfile(output + ".png") is False:
             print("la")
             print(os.path.isfile(output))
             print(output)

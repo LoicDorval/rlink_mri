@@ -38,7 +38,6 @@ def qc(datadir, regex, outdir, simg_file,
     if cmd is None:
         cmd = (f"singularity run --bind {datadir} --cleanenv "
                f"{simg_file} brainprep dmriprep-qc ")
-
     else:
         cmd = f"python3 {cmd} dmriprep-qc "
     cmd += (f"--data_regex {regex} "

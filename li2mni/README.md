@@ -24,3 +24,6 @@ The code is organized in two parts:
   - 1 : good quality -> accepted
   - 2 : medium quality -> accepted
   - 3 : bad -> rejected
+
+* **make_mni_snapshot**: generate MNI image shaphots with overlaid lithium
+images for each suject and create a .pdf with all generated images.
